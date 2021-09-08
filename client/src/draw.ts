@@ -1,7 +1,8 @@
-import { context, gameMap, player } from '.'
+import { context, entities, gameMap, player, spriteLibrary } from '.'
+import { Player } from './Player'
 
 export const drawPlayer = () => {
-  context.drawImage(player.sprite.image, player.x, player.y)
+  context.drawImage(spriteLibrary[player.sprite].image, player.x, player.y)
 }
 
 export const drawMap = () => {
@@ -10,8 +11,14 @@ export const drawMap = () => {
       const currentTile = gameMap.tiles[y][x]
 
       currentTile.sprites.forEach((sprite) => {
-        context.drawImage(sprite.image, x * 32, y * 32)
+        context.drawImage(spriteLibrary[sprite.id].image, x * 32, y * 32)
       })
     }
   }
+}
+
+export const drawEntities = () => {
+  entities.forEach((entity: Player) => {
+    context.drawImage(spriteLibrary[entity.sprite].image, entity.x, entity.y)
+  })
 }

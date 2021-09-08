@@ -1,5 +1,6 @@
 import { player } from '.'
 import { Direction } from './Player'
+import { emitMove } from './socket'
 
 const keysPressed: any = {}
 
@@ -29,7 +30,6 @@ const removeKey = (e: any) => {
 export const checkKeyPress = (e: KeyboardEvent) => {
   keysPressed[e.key] = true
   var code = e.key
-
   if (keysPressed.Control) {
     switch (code) {
       case 'ArrowLeft':
@@ -48,23 +48,28 @@ export const checkKeyPress = (e: KeyboardEvent) => {
     return
   }
 
+  if (player.walking) return
+
+  let dir
   switch (code) {
     // case 'Escape':
     //   if(player.traveling) {
     //     player.traveling = false
     //   }
     //   break;
+
     case 'ArrowLeft':
-      player.move(Direction.Left)
+      dir = Direction.Left
       break
     case 'ArrowUp':
-      player.move(Direction.Up)
+      dir = Direction.Up
       break
     case 'ArrowRight':
-      player.move(Direction.Right)
+      dir = Direction.Right
       break
     case 'ArrowDown':
-      player.move(Direction.Down)
+      dir = Direction.Down
       break
   }
+  emitMove(dir as any)
 }

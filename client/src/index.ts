@@ -1,9 +1,8 @@
-import { drawMap, drawPlayer } from './draw'
+import { drawEntities, drawMap, drawPlayer } from './draw'
 import { GameMap } from './GameMap'
 import { inputsSetup } from './input'
-import { Player } from './Player'
+import { Direction, Player, PlayerFromServer } from './Player'
 import { loadSprites } from './sprites'
-import { loadMap } from './map'
 
 export const WINDOW_WIDTH = 42 * 32
 export const WINDOW_HEIGHT = 24 * 32
@@ -11,19 +10,60 @@ export const WINDOW_HEIGHT = 24 * 32
 export let canvas = document.createElement('canvas')
 export let context: any
 export let player: Player
-export let gameMap: GameMap
+export let gameMap: GameMap = [[]] as any
 export let spriteLibrary: any
+export let entities: any = []
 
-const setup = async () => {
+export const addEntity = (entity: PlayerFromServer) => {
+  console.log(entity.id, 'connected')
+  entities.push(new Player(entity))
+
+  console.log(entities)
+}
+
+export const removeEntity = (entity: PlayerFromServer) => {
+  console.log(entity.id, 'dicconnected')
+  entities = entities.filter((e: any) => e.id !== entity.id)
+}
+
+export const entityMoved = (playerId: any, direction: any) => {
+  let entity
+
+  if (player.id === playerId) entity = player
+  else entity = entities.find((e: any) => e.id === playerId)
+
+  let d
+  switch (direction) {
+    case 'up':
+      d = Direction.Up
+      break
+    case 'down':
+      d = Direction.Down
+      break
+    case 'left':
+      d = Direction.Left
+      break
+    case 'right':
+      d = Direction.Right
+      break
+  }
+
+  entity.move(d as Direction)
+}
+
+const setup = async (myPlayer: PlayerFromServer, map: GameMap, serverEntities: any[]) => {
+  console.log('received entities', entities)
   canvas.width = WINDOW_WIDTH
   canvas.height = WINDOW_HEIGHT
   context = canvas.getContext('2d')
   document.body.insertBefore(canvas, document.body.childNodes[0])
 
+  entities = serverEntities.map((entity) => new Player(entity))
+
   spriteLibrary = await loadSprites()
 
-  player = new Player(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
-  gameMap = new GameMap(loadMap())
+  player = new Player(myPlayer)
+  gameMap = map
 
   inputsSetup()
 }
@@ -31,6 +71,7 @@ const setup = async () => {
 const loop = async () => {
   drawMap()
   drawPlayer()
+  drawEntities()
 
   // if (player.traveling) {
   //   player.travel()
@@ -48,9 +89,9 @@ const theLoop = async () => {
   window.requestAnimationFrame(theLoop)
 }
 
-;(async () => {
-  await setup()
+export const startEngine = async (myPlayer: PlayerFromServer, map: GameMap, entities: any[]) => {
+  await setup(myPlayer, map, entities)
 
   theLoop()
   window.requestAnimationFrame(theLoop)
-})()
+}
