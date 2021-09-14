@@ -1,5 +1,4 @@
-import { gameMap, WINDOW_HEIGHT, WINDOW_WIDTH } from '.'
-import { emitMove } from './socket'
+import { WINDOW_HEIGHT, WINDOW_WIDTH } from './Core'
 
 export enum Direction {
   Up = 'up',
@@ -16,11 +15,14 @@ export interface PlayerFromServer {
   y: number
   spriteBase: number
   level: number
+  health: number
+  name: string
 }
 export class Player {
   id: number
   x: number
   y: number
+  health: number
   walking: boolean = false
   dancing: boolean = false
   // traveling: boolean = false
@@ -32,44 +34,22 @@ export class Player {
   sprite = this.spriteBase
   level: number = 150
   speed = Math.max(800 - this.level * 5, 200)
+  name: string
 
-  constructor({ id, x, y, spriteBase, level }: PlayerFromServer) {
+  constructor(player: PlayerFromServer) {
+    const { id, x, y, spriteBase, level, health, name } = player
     this.id = id
-    this.x = x
-    this.y = y
+    this.x = x * 32
+    this.y = y * 32
     this.spriteBase = spriteBase
     this.sprite = spriteBase
     this.level = level
     this.speed = Math.max(800 - level * 5, 200)
+    this.health = health
+    this.name = name
   }
 
   move = (direction: Direction) => {
-    if (this.walking) return
-
-    let destinationTilePos
-    const realX = this.x / 32
-    const realY = this.y / 32
-
-    switch (direction) {
-      case Direction.Up:
-        destinationTilePos = [realX, realY - 1]
-        break
-      case Direction.Down:
-        destinationTilePos = [realX, realY + 1]
-        break
-      case Direction.Left:
-        destinationTilePos = [realX - 1, realY]
-        break
-      case Direction.Right:
-        destinationTilePos = [realX + 1, realY]
-        break
-    }
-    const destinationTile = gameMap.tiles[destinationTilePos[1]][destinationTilePos[0]]
-
-    if (!destinationTile.walkable) return
-
-    this.walking = true
-
     switch (direction) {
       case Direction.Up:
         if (this.y === 0) return
@@ -124,32 +104,31 @@ export class Player {
     const spr = [movementSpriteBase + 1, movementSpriteBase + 2]
     let sprI = 0
 
-    this[property] = this[property] + 32 * signal
-    this.walking = false
+    this.walking = true
 
-    // let tickRuns = 0
-    // const runMove = () => {
-    //   this[property] = this[property] + tick * signal
+    let tickRuns = 0
+    const runMove = () => {
+      this[property] = this[property] + tick * signal
 
-    //   if (sprI === spr.length) {
-    //     sprI = 0
-    //   }
+      if (sprI === spr.length) {
+        sprI = 0
+      }
 
-    //   this.sprite = spr[sprI]
-    //   sprI += 1
+      this.sprite = spr[sprI]
+      sprI += 1
 
-    //   tickRuns += 1
-    //   if (tickRuns < 8) {
-    //     setTimeout(runMove, this.speed / 8)
+      tickRuns += 1
+      if (tickRuns < 8) {
+        setTimeout(runMove, this.speed / 8)
 
-    //     return
-    //   }
+        return
+      }
 
-    //   this.sprite = movementSpriteBase
-    //   this.walking = false
-    // }
+      this.sprite = movementSpriteBase
+      this.walking = false
+    }
 
-    // setTimeout(runMove, this.speed / 8)
+    setTimeout(runMove, this.speed / 8)
   }
 
   // setTravelDestination = (x: number, y: number) => {
